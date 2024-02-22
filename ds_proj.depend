@@ -1,7 +1,6 @@
 # depslib dependency file v1.0
-1708385026 source:d:\iti\ds\ds_proj\main.cpp
+1708562616 source:d:\iti\ds\ds_proj\main.cpp
 	<iostream>
-	<queue>
 	<vector>
 	<ctime>
 

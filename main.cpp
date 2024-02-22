@@ -1,150 +1,212 @@
 #include <iostream>
-#include <queue>
 #include <vector>
 #include <ctime>
 
 using namespace std;
 
-// Customer structure
-class Customer {
+class Customer
+{
 public:
     int id;
-    int serviceTime;
-    int waitingTime; // New attribute for waiting time
-
-    // Constructor
-    Customer(int _id, int _serviceTime, int _waitingTime = 0) : id(_id), serviceTime(_serviceTime), waitingTime(_waitingTime) {}
+    int servicetime;
+    int waitingtime;
+    Customer() {}
+    Customer(int Id, int Servicetime, int Waitingtime = 0)
+    {
+        id = Id;
+        servicetime = Servicetime;
+        waitingtime = Waitingtime;
+    }
 };
-
-// Teller structure
-struct Teller {
+/////////////////////////////////////////////////
+class Teller
+{
+public:
     bool available;
-
-    // Constructor
-    Teller() : available(true) {}
+    Teller()
+    {
+        available = true;
+    }
 };
-
-class BankQueueManagementSystem {
+///////////////////////////////////////////////////////////////////
+class Queue
+{
 private:
-    queue<Customer> customerQueue;
-    vector<Teller> tellers;
-    // Statistics
-    int totalCustomersServed;
-    int totalWaitingTime;
-    int totalServiceTime;
+    class Node
+    {
+    public:
+        Customer data;
+        Node *next;
+
+        Node(Customer data)
+        {
+            this->data = data;
+            next = NULL;
+        }
+    };
+
+    Node *rear, *front;
 
 public:
-    BankQueueManagementSystem(int numTellers) : totalCustomersServed(0), totalWaitingTime(0), totalServiceTime(0) {
-        // Initialize tellers
-        for (int i = 0; i < numTellers; ++i) {
+    Queue()
+    {
+        rear = front = NULL;
+    }
+
+    int enqueue(Customer data)
+    {
+        Node *node = new Node(data);
+        if (front == NULL)
+        {
+            front = rear = node;
+        }
+        else
+        {
+            rear->next = node;
+            rear = node;
+        }
+        return 1;
+    }
+
+    int dequeue(Customer &data)
+    {
+        if (front == NULL)
+        {
+            return 0;
+        }
+        Node *front2 = front;
+        data = front2->data;
+        front = front->next;
+        delete front2;
+
+        return 1;
+    }
+
+    bool empty()
+    {
+        return front == NULL;
+    }
+};
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+class BQMS
+{
+private:
+    Queue customerqueue;
+    vector<Teller> tellers;
+    int totalcustomersserved;
+    int totalwaitingtime;
+    int totalservicetime;
+
+public:
+    BQMS(int numtellers)
+    {
+        totalcustomersserved = 0;
+        totalwaitingtime = 0;
+        totalservicetime = 0;
+
+        for (int i = 0; i < numtellers; ++i)
+        {
             tellers.push_back(Teller());
         }
     }
-
-    void enqueueCustomer(int customerId) {
-        int serviceTime = generateRandomServiceTime();
-        Customer customer(customerId, serviceTime);
-        customerQueue.push(customer);
-        cout << "Customer " << customerId <<"\t" << " arrived the Bank " <<endl<<"service time: " << serviceTime << " minutes." << endl;
+////////////////////////////////////////////////////////////////////////////////////////
+    void enqueue(int customerId, int servicetime)
+    {
+        Customer customer(customerId, servicetime);
+        customerqueue.enqueue(customer);
+        cout << "Customer " << customerId << "\t" << " arrived the Bank " <<"==============="
+             << "service time: " << servicetime << " minutes." << endl;
+        dequeue();
     }
-
-    void dequeueCustomer() {
-        if (!customerQueue.empty()) {
-            Customer customer = customerQueue.front();
-            customerQueue.pop();
-            assignCustomerToTeller(customer);
-        } else {
-            cout << "No customers in the queue." << endl;
+///////////////////////////////////////////////////////////////////////////////////////////////////////
+    void dequeue()
+    {
+        if (!customerqueue.empty())
+        {
+            Customer customer;
+            customerqueue.dequeue(customer);
+            addcustomerinteller(customer);
+        }
+        else
+        {
+            cout << "not found customers in the queue." << endl;
         }
     }
+///////////////////////////////////////////////////////////////////////////////////////////////////////
+    void addcustomerinteller(Customer customer)
+    {
+        int waitingtime = 0;
+        int queueSize = customerqueue.empty();
+        Queue tempqueue = customerqueue;
 
-    void assignCustomerToTeller(Customer customer) {
-        int waitingTime = 0;
-        int queueSize = customerQueue.size();
-        queue<Customer> tempQueue = customerQueue;
-
-        while (!tempQueue.empty()) {
-            Customer tempCustomer = tempQueue.front();
-            tempQueue.pop();
-            if (tempCustomer.id != customer.id) {
-                waitingTime += tempCustomer.serviceTime;
-
-            } else {
-                break;
+        while (!tempqueue.empty())
+        {
+            Customer tempCustomer;
+            tempqueue.dequeue(tempCustomer);
+            if (tempCustomer.id = customer.id)
+            {
+              break;
             }
-
+            else
+            {
+               waitingtime += tempCustomer.servicetime;
+            }
         }
-
-        for (int i = 0; i < tellers.size(); ++i) {
-            if (tellers[i].available) { // Check if the teller is available
-                tellers[i].available = false; // Mark the teller as busy
-                totalCustomersServed++;
-                totalServiceTime += customer.serviceTime;
-                cout << "Customer " << customer.id <<"\t"<< " is being served by Teller " << i + 1 << "." << endl;
-            //    totalWaitingTime += waitingTime; // Update total waiting time with the customer's waiting time
-           //     customer.waitingTime = waitingTime;
-
+        totalwaitingtime += waitingtime;
+        for (int i = 0; i < tellers.size(); ++i)
+        {
+            if (tellers[i].available)
+            {
+                tellers[i].available = false;
+                totalcustomersserved++;
+                totalservicetime += customer.servicetime;
+                cout << "customer " << customer.id << "\t"
+                     << " is being served by Teller " << i + 1 << "." << endl;
                 return;
             }
+        }
 
+        cout << "All tellers are busy " << customer.id << " is waiting for " << waitingtime << " minutes." << endl;
+    }
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    void display()
+    {
+        if (totalcustomersserved > 0)
+        {
+            cout << "avg waiting time: " << (totalwaitingtime / totalcustomersserved) << " minutes." << endl;
+            cout << "avg service time: " << (totalservicetime / totalcustomersserved) << " minutes." << endl;
+            cout << "percentage of customers served: " << (double(totalcustomersserved) / (totalcustomersserved + 1) * 100) << "%" << endl;
 
         }
-    cout << "All tellers are busy. Customer " << customer.id << " is waiting" <<waitingTime<<"minutes."<< endl;
-
-
-    }
-
-    int generateRandomServiceTime() {
-        // Generate random service time (between 5 and 15 minutes for example)
-        return rand() % 11 + 5;
-    }
-
-    void displayStatistics() {
-        cout << "Total customers served: " << totalCustomersServed << endl;
-        if (totalCustomersServed > 0) {
-            cout << "Average waiting time: " << (totalWaitingTime / totalCustomersServed) << " minutes." << endl;
-            cout << "Average service time: " << (totalServiceTime / totalCustomersServed) << " minutes." << endl;
-        } else {
-            cout << "No customers served yet." << endl;
+        else
+        {
+            cout << "no customers served " << endl;
         }
+                cout << "Total customers served: " << totalcustomersserved << endl;
 
     }
 };
+//////////////////////////////////////////////////////////////////////////////////////////
+int main()
+{
+    srand(time(0));
 
-int main() {
-    srand(time(0)); // Seed for random number generator
+    int numtellers = 3;
+    //     int numtellers = 5;
 
-    int numTellers = 3;
-   //  int numTellers = 5; // Number of tellers
-    BankQueueManagementSystem bqms(numTellers);
-
-    // Test the system
-    bqms.enqueueCustomer(1);
-        bqms.dequeueCustomer();
-
-    bqms.enqueueCustomer(2);
-        bqms.dequeueCustomer();
-
-    bqms.enqueueCustomer(3);
-        bqms.dequeueCustomer();
-
-    bqms.enqueueCustomer(4);
-        bqms.dequeueCustomer();
-
-    bqms.enqueueCustomer(5);
-        bqms.dequeueCustomer();
-
-    bqms.enqueueCustomer(6);
-        bqms.dequeueCustomer();
-
-    bqms.enqueueCustomer(7);
-        bqms.dequeueCustomer();
-
-    bqms.enqueueCustomer(8);
-    bqms.dequeueCustomer();
-
-
-    bqms.displayStatistics();
+    BQMS bqms(numtellers);
+    bqms.enqueue(1,2);
+    bqms.enqueue(2,2);
+    bqms.enqueue(3,2);
+    bqms.enqueue(4,2);
+    bqms.enqueue(5,2);
+    bqms.enqueue(6,10);
+    bqms.enqueue(7,18);
+    bqms.enqueue(8,22);
+    bqms.enqueue(9,18);
+    bqms.enqueue(10,24);
+    bqms.enqueue(11,6);
+    bqms.display();
 
     return 0;
 }
